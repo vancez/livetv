@@ -12,4 +12,5 @@ type Config struct {
 	BaseURL string
 	Cmd     string
 	Args    string
+	ProxyURL string
 }

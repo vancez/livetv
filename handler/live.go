@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -13,6 +14,22 @@ import (
 	"github.com/zjyl1994/livetv/service"
 	"github.com/zjyl1994/livetv/util"
 )
+
+func genHttpClient() http.Client {
+	client := http.Client{Timeout: global.HttpClientTimeout}
+	ProxyUrl, err := service.GetConfig("proxy_url")
+	if err != nil {
+		log.Println(err)
+		return client
+	}
+	proxyUrl, err := url.Parse(ProxyUrl)
+	if err != nil {
+		log.Println(err)
+		return client
+	}
+	client.Transport = &http.Transport{Proxy: http.ProxyURL(proxyUrl)}
+	return client
+}
 
 func M3UHandler(c *gin.Context) {
 	content, err := service.M3UGenerate()
@@ -58,7 +75,7 @@ func LiveHandler(c *gin.Context) {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
-		client := http.Client{Timeout: global.HttpClientTimeout}
+		client := genHttpClient()
 		resp, err := client.Get(liveM3U8)
 		if err != nil {
 			log.Println(err)
@@ -95,7 +112,7 @@ func TsProxyHandler(c *gin.Context) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
-	client := http.Client{Timeout: global.HttpClientTimeout}
+	client := genHttpClient()
 	resp, err := client.Get(remoteURL)
 	if err != nil {
 		log.Println(err)

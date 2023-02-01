@@ -95,6 +95,15 @@
                   </span>
                 </div>
               </div>
+              <div class="form-group">
+                <label for="inputProxy">ProxyURL</label>
+                <div class="input-group">
+                  <input type="url" class="form-control" id="inputProxy" name="proxy" value="{{.Configs.ProxyURL}}">
+                  <span class="input-group-btn">
+                    <button class="btn btn-default" type="button" id="proxy-reset-button">Reset</button>
+                  </span>
+                </div>
+              </div>
               <button type="submit" class="btn btn-default">Save Config</button>
             </form>
           </div>
@@ -134,6 +143,9 @@
     <script src="/assert/js/bootstrap.min.js"></script>
     <script src="/assert/js/bootbox.all.min.js"></script>
     <script>
+      $("#proxy-reset-button").click(function(){
+          $("#inputProxy").val("")
+      });
       $("#auto-fill-button").click(function(){
           $("#inputBaseURL").val(window.location.protocol + "//" + window.location.host)
       });

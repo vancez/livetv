@@ -74,12 +74,7 @@ func IndexHandler(c *gin.Context) {
 		return
 	}
 
-	var templateFilename string
-	if langTag == language.Chinese {
-		templateFilename = "index-zh.html"
-	} else {
-		templateFilename = "index.html"
-	}
+	templateFilename := "index.html"
 	c.HTML(http.StatusOK, templateFilename, gin.H{
 		"Channels": channels,
 		"Configs":  conf,
@@ -102,6 +97,11 @@ func loadConfig() (Config, error) {
 		return conf, err
 	} else {
 		conf.BaseURL = burl
+	}
+	if purl, err := service.GetConfig("proxy_url"); err != nil {
+		return conf, err
+	} else {
+		conf.ProxyURL = purl
 	}
 	return conf, nil
 }
@@ -162,6 +162,7 @@ func UpdateConfigHandler(c *gin.Context) {
 	ytdlCmd := c.PostForm("cmd")
 	ytdlArgs := c.PostForm("args")
 	baseUrl := strings.TrimSuffix(c.PostForm("baseurl"), "/")
+	proxyUrl := c.PostForm("proxy")
 	if len(ytdlCmd) > 0 {
 		err := service.SetConfig("ytdl_cmd", ytdlCmd)
 		if err != nil {
@@ -184,6 +185,16 @@ func UpdateConfigHandler(c *gin.Context) {
 	}
 	if len(baseUrl) > 0 {
 		err := service.SetConfig("base_url", baseUrl)
+		if err != nil {
+			log.Println(err.Error())
+			c.HTML(http.StatusInternalServerError, "error.html", gin.H{
+				"ErrMsg": err.Error(),
+			})
+			return
+		}
+	}
+	if len(proxyUrl) > 0 {
+		err := service.SetConfig("proxy_url", proxyUrl)
 		if err != nil {
 			log.Println(err.Error())
 			c.HTML(http.StatusInternalServerError, "error.html", gin.H{
@@ -277,11 +288,18 @@ func ChangePasswordHandler(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/login")
 	}
 	pass := c.PostForm("password")
+	if len(pass) == 0 {
+		c.HTML(http.StatusOK, "error.html", gin.H{
+			"ErrMsg": "Password empty!",
+		})
+		return
+	}
 	pass2 := c.PostForm("password2")
 	if pass != pass2 {
 		c.HTML(http.StatusOK, "error.html", gin.H{
 			"ErrMsg": "Password mismatch!",
 		})
+		return
 	}
 	err := service.SetConfig("password", pass)
 	if err != nil {
